@@ -1,8 +1,43 @@
+server:
+  port: 9090
 spring:
   application:
     name: api-gateway
-server:
-  port: 9090
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://127.0.0.1:9000
+      client:
+        registration:
+          client-app:
+            provider: spring
+            client-id: gateway
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: http://127.0.0.1:9090/authorized
+            scope:
+              - openid
+              - profile
+            client-name: client-app
+        provider:
+          spring:
+            issuer-uri: http://127.0.0.1:9000
+  cloud:
+    gateway:
+      routes:
+        - id: authentication
+          uri: lb://authentication
+          predicates:
+            - Path=/gateway/authentication/**
+          filters:
+            - StripPrefix=2
+        - id: users
+          uri: lb://users-service
+          predicates:
+            - Path=/gateway/users/**
+          filters:
+            - StripPrefix=2
 eureka:
   client:
     service-url:
