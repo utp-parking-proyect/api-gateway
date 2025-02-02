@@ -38,6 +38,12 @@ spring:
             - Path=/gateway/users/**
           filters:
             - StripPrefix=2
+        - id: request
+          uri: lb://business-parking-request
+          predicates:
+            - Path=/gateway/request/**
+          filters:
+            - StripPrefix=2
 eureka:
   client:
     service-url:

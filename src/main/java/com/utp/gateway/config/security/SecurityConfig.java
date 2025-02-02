@@ -28,6 +28,8 @@ public class SecurityConfig {
         return http.authorizeExchange(auth -> auth.pathMatchers("/authorized", "/logout").permitAll()
                         .pathMatchers("/gateway/users/**")
                             .hasAnyRole(Constants.ROLE_SAE)
+                        .pathMatchers(HttpMethod.POST,"/gateway/request")
+                            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_TEACHER)
                         .anyExchange().authenticated())
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
