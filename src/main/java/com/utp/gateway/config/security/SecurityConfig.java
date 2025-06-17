@@ -13,38 +13,64 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.List;
-
-import static org.springframework.security.config.Customizer.withDefaults;
+import java.util.stream.Collectors;
 
 @EnableWebFluxSecurity
 @Configuration
 public class SecurityConfig {
-    @Bean
-    SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        return http.authorizeExchange(auth -> auth.pathMatchers("/authorized", "/logout").permitAll()
-                        .pathMatchers("/gateway/users/**")
-                            .hasAnyRole(Constants.ROLE_SAE)
-                        .pathMatchers(HttpMethod.POST,"/gateway/request")
-                            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_TEACHER)
-                        .anyExchange().authenticated())
-                .cors(ServerHttpSecurity.CorsSpec::disable)
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .oauth2Login(withDefaults())
-                .oauth2Client(withDefaults())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
-                    jwt.jwtAuthenticationConverter((Converter<Jwt, Mono<AbstractAuthenticationToken>>)
-                            source -> {
-                                Collection<String> roles = source.getClaimAsStringList("roles");
-                                List<SimpleGrantedAuthority> authorities = roles.stream()
-                                        .map(SimpleGrantedAuthority::new)
-                                        .toList();
-                                return Mono.just(new JwtAuthenticationToken(source, authorities));
-                            })))
-                .build();
-    }
+  @Bean
+  SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    return http
+        .authorizeExchange(auth -> auth
+            .pathMatchers(HttpMethod.OPTIONS).permitAll()
+            .pathMatchers(
+                "/oauth2/**",
+                "/authorized",
+                "/logout"
+            ).permitAll()
+            .pathMatchers("/gateway/users/**")
+            .hasAnyRole(Constants.ROLE_SAE)
+            .pathMatchers(HttpMethod.POST, "/gateway/request")
+            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER)
+            .anyExchange().authenticated()
+        )
+        .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .jwt(jwt -> jwt
+                .jwkSetUri("http://localhost:9000/oauth2/jwks")
+                .jwtAuthenticationConverter(grantedAuthoritiesExtractor())
+            )
+        )
+        .build();
+  }
+
+  private Converter<Jwt, Mono<AbstractAuthenticationToken>> grantedAuthoritiesExtractor() {
+    return jwt -> {
+      Collection<String> authorities = jwt.getClaimAsStringList("roles");
+      return Mono.just(new JwtAuthenticationToken(jwt, authorities.stream()
+          .map(SimpleGrantedAuthority::new)
+          .collect(Collectors.toList())));
+    };
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }

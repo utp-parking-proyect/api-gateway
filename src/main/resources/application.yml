@@ -8,24 +8,33 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://127.0.0.1:9000
-      client:
-        registration:
-          client-app:
-            provider: spring
-            client-id: gateway
-            client-secret: ${CLIENT_SECRET}
-            authorization-grant-type: authorization_code
-            redirect-uri: http://127.0.0.1:9090/authorized
-            scope:
-              - openid
-              - profile
-            client-name: client-app
-        provider:
-          spring:
-            issuer-uri: http://127.0.0.1:9000
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "http://localhost:4200"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+              - PUT
+              - DELETE
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
       routes:
+        - id: logout-route
+          uri: lb://authentication
+          predicates:
+            - Path=/logout
+          filters:
+            - RewritePath=/logout, /oauth2/logout
+        - id: oauth2-routes  # Nueva ruta para autenticación
+          uri: lb://authentication
+          predicates:
+            - Path=/oauth2/**
         - id: authentication
           uri: lb://authentication
           predicates:
