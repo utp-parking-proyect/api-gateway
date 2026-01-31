@@ -20,7 +20,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @EnableWebFluxSecurity
 @Configuration
@@ -38,7 +37,7 @@ public class SecurityConfig {
             .pathMatchers("/gateway/users/**")
             .hasAnyRole(Constants.ROLE_SAE)
             .pathMatchers(HttpMethod.POST, "/gateway/request")
-            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER)
+            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE)
             .anyExchange().authenticated()
         )
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -57,7 +56,7 @@ public class SecurityConfig {
       Collection<String> authorities = jwt.getClaimAsStringList("roles");
       return Mono.just(new JwtAuthenticationToken(jwt, authorities.stream()
           .map(SimpleGrantedAuthority::new)
-          .collect(Collectors.toList())));
+          .toList()));
     };
   }
 
