@@ -38,6 +38,8 @@ public class SecurityConfig {
             .hasAnyRole(Constants.ROLE_SAE)
             .pathMatchers(HttpMethod.POST, "/gateway/request")
             .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE)
+            .pathMatchers(HttpMethod.PUT, "/gateway/response")
+            .hasAnyRole(Constants.ROLE_SAE)
             .anyExchange().authenticated()
         )
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
