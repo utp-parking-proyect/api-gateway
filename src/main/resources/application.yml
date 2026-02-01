@@ -53,6 +53,12 @@ spring:
             - Path=/gateway/business-parking-request/**
           filters:
             - StripPrefix=2
+        - id: response
+          uri: lb://business-parking-response
+          predicates:
+            - Path=/gateway/business-parking-response/**
+          filters:
+            - StripPrefix=2
 eureka:
   client:
     service-url:

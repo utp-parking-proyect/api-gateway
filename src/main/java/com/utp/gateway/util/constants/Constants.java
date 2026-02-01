@@ -1,6 +1,10 @@
 package com.utp.gateway.util.constants;
 
 public class Constants {
+
+  private Constants() {
+  }
+
   public static final String ROLE_STUDENT = "STUDENT";
   public static final String ROLE_SECURITY = "SECURITY";
   public static final String ROLE_SAE = "SAE";
