@@ -43,10 +43,10 @@ spring:
                 - Path=/gateway/authentication/**
               filters:
                 - StripPrefix=2
-            - id: users
-              uri: lb://users-service
+            - id: portal
+              uri: lb://business-core-portal
               predicates:
-                - Path=/gateway/users/**
+                - Path=/gateway/portal/**
               filters:
                 - StripPrefix=2
             - id: request

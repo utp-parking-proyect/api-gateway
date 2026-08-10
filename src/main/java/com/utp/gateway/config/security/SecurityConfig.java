@@ -34,7 +34,7 @@ public class SecurityConfig {
                 "/authorized",
                 "/logout"
             ).permitAll()
-            .pathMatchers("/gateway/users/**")
+            .pathMatchers("/gateway/portal/**")
             .hasAnyRole(Constants.ROLE_SAE)
             .pathMatchers(HttpMethod.POST, "/gateway/request")
             .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE)
