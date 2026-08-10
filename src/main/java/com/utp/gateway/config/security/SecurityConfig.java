@@ -32,7 +32,8 @@ public class SecurityConfig {
             .pathMatchers(
                 "/oauth2/**",
                 "/authorized",
-                "/logout"
+                "/logout",
+                "/gateway/authentication/**"
             ).permitAll()
             .pathMatchers("/gateway/portal/**")
             .hasAnyRole(Constants.ROLE_SAE)
