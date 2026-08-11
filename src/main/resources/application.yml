@@ -46,19 +46,19 @@ spring:
             - id: portal
               uri: lb://business-core-portal
               predicates:
-                - Path=/gateway/portal/**
+                - Path=/gateway/utp-portal/**
               filters:
                 - StripPrefix=2
             - id: request
               uri: lb://business-parking-request
               predicates:
-                - Path=/gateway/business-parking-request/**
+                - Path=/gateway/utp-parking/request/**
               filters:
                 - StripPrefix=2
             - id: response
               uri: lb://business-parking-response
               predicates:
-                - Path=/gateway/business-parking-response/**
+                - Path=/gateway/utp-parking/response/**
               filters:
                 - StripPrefix=2
 eureka:

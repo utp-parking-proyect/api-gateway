@@ -24,6 +24,9 @@ import java.util.List;
 @EnableWebFluxSecurity
 @Configuration
 public class SecurityConfig {
+
+  private static final String PORTAL_CURRENT_USER_PATH = "/gateway/portal/utp-portal/v1/users/me";
+
   @Bean
   SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
     return http
@@ -35,6 +38,8 @@ public class SecurityConfig {
                 "/logout",
                 "/gateway/authentication/**"
             ).permitAll()
+            .pathMatchers(HttpMethod.GET, PORTAL_CURRENT_USER_PATH)
+            .authenticated()
             .pathMatchers("/gateway/portal/**")
             .hasAnyRole(Constants.ROLE_SAE)
             .pathMatchers(HttpMethod.POST, "/gateway/request")
