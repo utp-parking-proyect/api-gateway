@@ -1,0 +1,67 @@
+server:
+  port: 9090
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://127.0.0.1:9000
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: "http://localhost:4200"
+                allowed-methods:
+                  - GET
+                  - POST
+                  - OPTIONS
+                  - PUT
+                  - DELETE
+                allowed-headers: "*"
+                allow-credentials: true
+                max-age: 3600
+          routes:
+            - id: logout-route
+              uri: lb://authentication
+              predicates:
+                - Path=/logout
+              filters:
+                - RewritePath=/logout, /oauth2/logout
+            - id: oauth2-routes  # Nueva ruta para autenticación
+              uri: lb://authentication
+              predicates:
+                - Path=/oauth2/**
+            - id: authentication
+              uri: lb://authentication
+              predicates:
+                - Path=/gateway/authentication/**
+              filters:
+                - StripPrefix=2
+            - id: portal
+              uri: lb://business-core-portal
+              predicates:
+                - Path=/gateway/utp-portal/**
+              filters:
+                - StripPrefix=2
+            - id: request
+              uri: lb://business-parking-request
+              predicates:
+                - Path=/gateway/utp-parking/request/**
+              filters:
+                - StripPrefix=2
+            - id: response
+              uri: lb://business-parking-response
+              predicates:
+                - Path=/gateway/utp-parking/response/**
+              filters:
+                - StripPrefix=2
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
