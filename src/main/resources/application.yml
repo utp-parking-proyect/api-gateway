@@ -13,19 +13,6 @@ spring:
     gateway:
       server:
         webflux:
-          globalcors:
-            cors-configurations:
-              '[/**]':
-                allowed-origins: "http://localhost:4200"
-                allowed-methods:
-                  - GET
-                  - POST
-                  - OPTIONS
-                  - PUT
-                  - DELETE
-                allowed-headers: "*"
-                allow-credentials: true
-                max-age: 3600
           routes:
             - id: logout-route
               uri: lb://authentication
