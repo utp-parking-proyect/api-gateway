@@ -25,11 +25,27 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-  private static final String PORTAL_CURRENT_USER_PATH = "/gateway/portal/utp-portal/v1/users/me";
+  private static final String PORTAL_PATH = "/gateway/utp-portal/**";
+  private static final String PORTAL_CURRENT_USER_PATH = "/gateway/utp-portal/users/me";
+  private static final String PORTAL_USER_BY_ID_PATH = "/gateway/utp-portal/users/{id}";
+  private static final String PORTAL_CYCLES_PATH = "/gateway/utp-portal/cycles/**";
+  private static final String PARKING_REQUEST_PATH = "/gateway/utp-parking/request";
+  private static final String PARKING_REQUEST_RESUBMIT_PATH =
+      "/gateway/utp-parking/request/{requestId}/resubmit";
+  private static final String PARKING_REQUEST_BY_ACCEPTOR_PATH =
+      "/gateway/utp-parking/request/acceptor/**";
+  private static final String PARKING_REQUEST_BY_APPLICANT_PATH =
+      "/gateway/utp-parking/request/applicant/**";
+  private static final String PARKING_RESPONSE_PATH = "/gateway/utp-parking/response/**";
+  private static final String[] APPLICANT_ROLES = {
+      Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE
+  };
 
   @Bean
-  SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+  SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
+                                                CorsConfigurationSource corsConfigurationSource) {
     return http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
         .authorizeExchange(auth -> auth
             .pathMatchers(HttpMethod.OPTIONS).permitAll()
             .pathMatchers(
@@ -38,14 +54,15 @@ public class SecurityConfig {
                 "/logout",
                 "/gateway/authentication/**"
             ).permitAll()
-            .pathMatchers(HttpMethod.GET, PORTAL_CURRENT_USER_PATH)
-            .authenticated()
-            .pathMatchers("/gateway/portal/**")
-            .hasAnyRole(Constants.ROLE_SAE)
-            .pathMatchers(HttpMethod.POST, "/gateway/request")
-            .hasAnyRole(Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE)
-            .pathMatchers(HttpMethod.PUT, "/gateway/response")
-            .hasAnyRole(Constants.ROLE_SAE)
+            .pathMatchers(HttpMethod.GET, PORTAL_CURRENT_USER_PATH).authenticated()
+            .pathMatchers(HttpMethod.GET, PORTAL_USER_BY_ID_PATH).authenticated()
+            .pathMatchers(HttpMethod.GET, PORTAL_CYCLES_PATH).authenticated()
+            .pathMatchers(PORTAL_PATH).hasRole(Constants.ROLE_SAE)
+            .pathMatchers(HttpMethod.POST, PARKING_REQUEST_PATH).hasAnyRole(APPLICANT_ROLES)
+            .pathMatchers(HttpMethod.POST, PARKING_REQUEST_RESUBMIT_PATH).hasAnyRole(APPLICANT_ROLES)
+            .pathMatchers(HttpMethod.GET, PARKING_REQUEST_BY_ACCEPTOR_PATH).hasRole(Constants.ROLE_SAE)
+            .pathMatchers(HttpMethod.PATCH, PARKING_RESPONSE_PATH).hasRole(Constants.ROLE_SAE)
+            .pathMatchers(HttpMethod.GET, PARKING_REQUEST_BY_APPLICANT_PATH).authenticated()
             .anyExchange().authenticated()
         )
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -62,6 +79,7 @@ public class SecurityConfig {
   private Converter<Jwt, Mono<AbstractAuthenticationToken>> grantedAuthoritiesExtractor() {
     return jwt -> {
       Collection<String> authorities = jwt.getClaimAsStringList("roles");
+      assert authorities != null;
       return Mono.just(new JwtAuthenticationToken(jwt, authorities.stream()
           .map(SimpleGrantedAuthority::new)
           .toList()));
@@ -72,7 +90,7 @@ public class SecurityConfig {
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);
 
