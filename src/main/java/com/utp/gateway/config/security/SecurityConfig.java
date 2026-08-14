@@ -37,6 +37,7 @@ public class SecurityConfig {
   private static final String PARKING_REQUEST_BY_APPLICANT_PATH =
       "/gateway/utp-parking/request/applicant/**";
   private static final String PARKING_RESPONSE_PATH = "/gateway/utp-parking/response/**";
+  private static final String PARKING_VEHICLES_PATH = "/gateway/utp-parking/vehicles/**";
   private static final String[] APPLICANT_ROLES = {
       Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE
   };
@@ -62,6 +63,7 @@ public class SecurityConfig {
             .pathMatchers(HttpMethod.POST, PARKING_REQUEST_RESUBMIT_PATH).hasAnyRole(APPLICANT_ROLES)
             .pathMatchers(HttpMethod.GET, PARKING_REQUEST_BY_ACCEPTOR_PATH).hasRole(Constants.ROLE_SAE)
             .pathMatchers(HttpMethod.PATCH, PARKING_RESPONSE_PATH).hasRole(Constants.ROLE_SAE)
+            .pathMatchers(PARKING_VEHICLES_PATH).hasAnyRole(APPLICANT_ROLES)
             .pathMatchers(HttpMethod.GET, PARKING_REQUEST_BY_APPLICANT_PATH).authenticated()
             .anyExchange().authenticated()
         )
