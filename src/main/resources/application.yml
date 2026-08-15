@@ -43,7 +43,7 @@ spring:
               filters:
                 - StripPrefix=2
             - id: vehicles
-              uri: lb://business-parking-request
+              uri: lb://business-parking-vehicles
               predicates:
                 - Path=/gateway/utp-parking/vehicles/**
               filters:
