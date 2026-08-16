@@ -11,7 +11,9 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.web.server.authentication.ServerBearerTokenAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
@@ -42,6 +44,10 @@ public class SecurityConfig {
       "/gateway/utp-parking/vehicles/unassignment-requests/acceptor/**";
   private static final String PARKING_UNASSIGNMENT_RESPONSE_PATH =
       "/gateway/utp-parking/vehicles/unassignment-requests/{unassignmentRequestId}";
+  private static final String PARKING_CONTROL_ENTRY_PATH = "/gateway/utp-parking/control/entry";
+  private static final String PARKING_CONTROL_EXIT_PATH = "/gateway/utp-parking/control/exit";
+  private static final String PARKING_CONTROL_AVAILABILITY_PATH =
+      "/gateway/utp-parking/control/availability/**";
   private static final String[] APPLICANT_ROLES = {
       Constants.ROLE_STUDENT, Constants.ROLE_TEACHER, Constants.ROLE_ADMINISTRATIVE
   };
@@ -73,17 +79,30 @@ public class SecurityConfig {
             .hasRole(Constants.ROLE_SAE)
             .pathMatchers(PARKING_VEHICLES_PATH).hasAnyRole(APPLICANT_ROLES)
             .pathMatchers(HttpMethod.GET, PARKING_REQUEST_BY_APPLICANT_PATH).authenticated()
+            .pathMatchers(HttpMethod.POST, PARKING_CONTROL_ENTRY_PATH)
+            .hasRole(Constants.ROLE_SECURITY)
+            .pathMatchers(HttpMethod.POST, PARKING_CONTROL_EXIT_PATH)
+            .hasRole(Constants.ROLE_SECURITY)
+            .pathMatchers(HttpMethod.GET, PARKING_CONTROL_AVAILABILITY_PATH).authenticated()
             .anyExchange().authenticated()
         )
         .csrf(ServerHttpSecurity.CsrfSpec::disable)
         .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
         .oauth2ResourceServer(oauth2 -> oauth2
+            .bearerTokenConverter(bearerTokenConverter())
             .jwt(jwt -> jwt
                 .jwkSetUri("http://localhost:9000/oauth2/jwks")
                 .jwtAuthenticationConverter(grantedAuthoritiesExtractor())
             )
         )
         .build();
+  }
+
+  private ServerAuthenticationConverter bearerTokenConverter() {
+    ServerBearerTokenAuthenticationConverter converter =
+        new ServerBearerTokenAuthenticationConverter();
+    converter.setAllowUriQueryParameter(true);
+    return converter;
   }
 
   private Converter<Jwt, Mono<AbstractAuthenticationToken>> grantedAuthoritiesExtractor() {
