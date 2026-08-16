@@ -13,19 +13,6 @@ spring:
     gateway:
       server:
         webflux:
-          globalcors:
-            cors-configurations:
-              '[/**]':
-                allowed-origins: "http://localhost:4200"
-                allowed-methods:
-                  - GET
-                  - POST
-                  - OPTIONS
-                  - PUT
-                  - DELETE
-                allowed-headers: "*"
-                allow-credentials: true
-                max-age: 3600
           routes:
             - id: logout-route
               uri: lb://authentication
@@ -55,10 +42,22 @@ spring:
                 - Path=/gateway/utp-parking/request/**
               filters:
                 - StripPrefix=2
+            - id: vehicles
+              uri: lb://business-parking-vehicles
+              predicates:
+                - Path=/gateway/utp-parking/vehicles/**
+              filters:
+                - StripPrefix=2
             - id: response
               uri: lb://business-parking-response
               predicates:
                 - Path=/gateway/utp-parking/response/**
+              filters:
+                - StripPrefix=2
+            - id: control
+              uri: lb://business-parking-control
+              predicates:
+                - Path=/gateway/utp-parking/control/**
               filters:
                 - StripPrefix=2
 eureka:
